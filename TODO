@@ -1,0 +1,40 @@
+1 [ ] Report
+2 [ ] User Instructions
+3 [ ] Ground Plane grid
+4 [ ] 1+ Adjustable, 3-jointed, 4-segment 3D shape
+      [ ] 4 sequentially joined segments
+      [ ] 4 segments connected by 3 joints
+      [ ] position adjustment from user input/event handling
+5 [ ] 4+ Multicolored shapes
+      [ ] objects not connected
+      [ ] uses at least 3 vertex colors 
+      [ ] blending with WebGL to get smooth pixel color transitions
+6 [ ] 3D Axes
+      [ ] world axes
+      [ ] some Model axes
+7 [ ] 4 Viewports that adjust to resolution/zoom
+      [ ] one 3D scene in 4 viewports (2x2 grid)
+          [ ] fixed orthographic views of the front
+          [ ] fixed orthographic views of the side
+          [ ] fixed orthographic views of the front
+          [ ] 3D pespective image 
+              [ ] mouse controlled viewing direction
+              [ ] mouse/keyboard controlled viewing position
+8 [ ] View control
+      [ ] enables users to explore 3D scene via event handling
+      [ ] camera allows movement from one 3D location to another (straight path!)
+      [ ] camera must be able to smoothly pivot viewing direction without changes to 3D position
+      [ ] camera must be able to smoothly move to any other 3D location without changing orientation
+9 [ ] Switch 3D cameras
+      [ ] in 4th viewport, let users switch between orthographic/perspective camera without changing the position/direction
+      
+Extra Credit 
+[ ] Adjustable camera [asymmetric left/right/top/bottom edges]
+[ ] Multiple Vertex Buffer Objects [different shapes in each]
+[ ] "Flying airplane" navigation control
+    [ ] forward velocity
+    [ ] roll
+    [ ] pitch
+    [ ] yaw
+[ ] "Trackball" control of one object [mouse drag changes the onscreen orientation
+      
