@@ -15,8 +15,8 @@
 7 [ ] 4 Viewports that adjust to resolution/zoom
       [ ] one 3D scene in 4 viewports (2x2 grid)
           [ ] fixed orthographic views of the front
+          [ ] fixed orthographic views of the top
           [ ] fixed orthographic views of the side
-          [ ] fixed orthographic views of the front
           [ ] 3D pespective image 
               [ ] mouse controlled viewing direction
               [ ] mouse/keyboard controlled viewing position
