@@ -38,7 +38,7 @@ var floatsPerVertex = 7;	// # of Float32Array elements used for each vertex
 													// Later, see if you can add:
 // (x,y,z) surface normal + (tx,ty) texture addr.
 
-var g_EyeX = 0.20, g_EyeY = 0.25, g_EyeZ = 0.25; //Eye position
+var g_EyeX = 0.5, g_EyeY = 0.5, g_EyeZ = 0.5; //Eye position (.20, .25, .25)
 
 function main() {
 //==============================================================================
@@ -123,8 +123,9 @@ function initVertexBuffer(gl) {
   makeSphere();						// create, fill the sphVerts array
   makeTorus();						// create, fill the torVerts array
   makeGroundGrid();				// create, fill the gndVerts array
+  makeCube();                   //create, fill the cubeVerts array
   // how many floats total needed to store all shapes?
-	var mySiz = (cylVerts.length + sphVerts.length + 
+	var mySiz = (cylVerts.length + cubeVerts.length + sphVerts.length + 
 							 torVerts.length + gndVerts.length);						
 
 	// How many vertices total?
@@ -137,6 +138,11 @@ function initVertexBuffer(gl) {
   for(i=0,j=0; j< cylVerts.length; i++,j++) {
   	colorShapes[i] = cylVerts[j];
 		}
+
+        cubeStart = i;						// next, we'll store the cube;
+    for (j = 0; j < cubeVerts.length; i++, j++) {// don't initialize i -- reuse it!
+      colorShapes[i] = cubeVerts[j];
+  }
 		sphStart = i;						// next, we'll store the sphere;
 	for(j=0; j< sphVerts.length; i++, j++) {// don't initialize i -- reuse it!
 		colorShapes[i] = sphVerts[j];
@@ -145,6 +151,7 @@ function initVertexBuffer(gl) {
 	for(j=0; j< torVerts.length; i++, j++) {
 		colorShapes[i] = torVerts[j];
 		}
+
 		gndStart = i;						// next we'll store the ground-plane;
 	for(j=0; j< gndVerts.length; i++, j++) {
 		colorShapes[i] = gndVerts[j];
@@ -210,10 +217,6 @@ function initVertexBuffer(gl) {
 
   return nn;
 }
-
-// simple & quick-- 
-// I didn't use any arguments such as color choices, # of verts,slices,bars, etc.
-// YOU can improve these functions to accept useful arguments...
 
 function makeCylinder() {
 //==============================================================================
@@ -310,6 +313,35 @@ function makeCylinder() {
 		}
 	}
 }
+
+function makeCube() {
+//==============================================================================
+// Make a cube from one OpenGL TRIANGLE primitive.
+// Create a cube
+//    v6----- v5
+//   /|      /|
+//  v1------v0|
+//  | |     | |
+//  | |v7---|-|v4
+//  |/      |/
+//  v2------v3
+    
+    // Create a (global) array to hold this cube's vertices:
+    cubeVerts = new Float32Array([
+        // Vertex coordinates and color
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // v0 White
+         -1.0, 1.0, 1.0, 1.0, 0.0, 1.0,  // v1 Magenta
+         -1.0, -1.0, 1.0, 1.0, 0.0, 0.0,  // v2 Red
+          1.0, -1.0, 1.0, 1.0, 1.0, 0.0,  // v3 Yellow
+          1.0, -1.0, -1.0, 0.0, 1.0, 0.0,  // v4 Green
+          1.0, 1.0, -1.0, 0.0, 1.0, 1.0,  // v5 Cyan
+         -1.0, 1.0, -1.0, 0.0, 0.0, 1.0,  // v6 Blue
+         -1.0, -1.0, -1.0, 0.0, 0.0, 0.0   // v7 Black
+        ]);
+
+    
+}
+
 
 function makeSphere() {
 //==============================================================================
@@ -541,7 +573,7 @@ function makeGroundGrid() {
 		gndVerts[j+5] = xColr[1];			// grn
 		gndVerts[j+6] = xColr[2];			// blu
 	}
-	// Second, step thru y values as wqe make horizontal lines of constant-y:
+	// Second, step thru y values as we make horizontal lines of constant-y:
 	// (don't re-initialize j--we're adding more vertices to the array)
 	for(v=0; v<2*ycount; v++, j+= floatsPerVertex) {
 		if(v%2==0) {		// put even-numbered vertices at (-xymax, ynow, 0)
@@ -592,8 +624,9 @@ function draw(gl, n, currentAngle, u_ViewMatrix, viewMatrix) {
   							cylStart/floatsPerVertex, // start at this vertex number, and
   							cylVerts.length/floatsPerVertex);	// draw this many vertices.
 */
-  
-  //--------Draw Spinning Sphere
+
+
+    //--------Draw Spinning Sphere
   viewMatrix.setTranslate( 0.4, 0.4, 0.0); // 'set' means DISCARD old matrix,
   						// (drawing axes centered in CVV), and then make new
   						// drawing axes moved to the lower-left corner of CVV.
@@ -611,11 +644,33 @@ function draw(gl, n, currentAngle, u_ViewMatrix, viewMatrix) {
   							sphVerts.length/floatsPerVertex);	// draw this many vertices.
   
 
+    // FIRST VIEWPORT: Fixed orthographic view of front
+    //------------------------------------------
+    //---------Draw Ground Plane, without spinning
+    // Set the matrix to be used for to set the camera view
+    viewMatrix.setLookAt(0, 0, 0, 0, 0, -1, 0, 1, 0);
+
+    // Pass the view projection matrix to our shaders:
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+
+    // DON'T clear <canvas> or you'll WIPE OUT what you drew in 1st viewport
+    // gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.viewport(0, 				// Viewport lower-left corner
+                            gl.drawingBufferHeight / 2, 		// location(in pixels)
+                        gl.drawingBufferWidth / 2, 				// viewport width, height.
+                        gl.drawingBufferHeight / 2);
+
+    // Draw just the ground-plane's vertices
+    gl.drawArrays(gl.LINES, 								// use this drawing primitive, and
+                            gndStart / floatsPerVertex,	// start at this vertex number, and
+                            gndVerts.length / floatsPerVertex);	// draw this many vertices.
+
     // SECOND VIEWPORT: Fixed orthographic view of top
     //------------------------------------------
     //---------Draw Ground Plane, without spinning
     // Set the matrix to be used for to set the camera view
-    viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);
+    viewMatrix.setLookAt(0, 0, 0, 0, 0, -1, 0, 1, 0);
 
     // Pass the view projection matrix
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
@@ -631,13 +686,35 @@ function draw(gl, n, currentAngle, u_ViewMatrix, viewMatrix) {
     // Draw just the ground-plane's vertices
   gl.drawArrays(gl.LINES, 								// use this drawing primitive, and
   						  gndStart/floatsPerVertex,	// start at this vertex number, and
+  						  gndVerts.length / floatsPerVertex);	// draw this many vertices
+
+    // THIRD VIEWPORT: Fixed orthographic view of side
+    //------------------------------------------
+    //---------Draw Ground Plane, without spinning
+    // Set the matrix to be used for to set the camera view
+  viewMatrix.setLookAt(0, 0, 0, 0, 0, -1, 0, 1, 0);
+
+    // Pass the view projection matrix to our shaders:
+  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
+
+    // DON'T clear <canvas> or you'll WIPE OUT what you drew in 1st viewport
+    // gl.clear(gl.COLOR_BUFFER_BIT);
+
+  gl.viewport(gl.drawingBufferWidth / 2, 				// Viewport lower-left corner
+                          gl.drawingBufferHeight / 2, 		// location(in pixels)
+                      gl.drawingBufferWidth / 2, 				// viewport width, height.
+                      gl.drawingBufferHeight / 2);
+
+    // Draw just the ground-plane's vertices
+  gl.drawArrays(gl.LINES, 								// use this drawing primitive, and
+  						  gndStart / floatsPerVertex,	// start at this vertex number, and
   						  gndVerts.length / floatsPerVertex);	// draw this many vertices.
 
     // FOURTH VIEWPORT: 3D perspective view
     //------------------------------------------
     //---------Draw Ground Plane, without spinning
     // Set the matrix to be used for to set the camera view
-  viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);
+  viewMatrix.setLookAt(0, 0, 0, 0, 0, -1, 0, 1, 0);
 
     // Pass the view projection matrix to our shaders:
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
@@ -655,50 +732,6 @@ function draw(gl, n, currentAngle, u_ViewMatrix, viewMatrix) {
   						  gndStart / floatsPerVertex,	// start at this vertex number, and
   						  gndVerts.length / floatsPerVertex);	// draw this many vertices.
 
-
-    // FIRST VIEWPORT: Fixed orthographic view of front
-    //------------------------------------------
-    //---------Draw Ground Plane, without spinning
-    // Set the matrix to be used for to set the camera view
-  viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);
-
-    // Pass the view projection matrix to our shaders:
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
-
-    // DON'T clear <canvas> or you'll WIPE OUT what you drew in 1st viewport
-    // gl.clear(gl.COLOR_BUFFER_BIT);
-
-  gl.viewport(0, 				// Viewport lower-left corner
-                          gl.drawingBufferHeight / 2, 		// location(in pixels)
-                      gl.drawingBufferWidth / 2, 				// viewport width, height.
-                      gl.drawingBufferHeight / 2);
-
-    // Draw just the ground-plane's vertices
-  gl.drawArrays(gl.LINES, 								// use this drawing primitive, and
-  						  gndStart / floatsPerVertex,	// start at this vertex number, and
-  						  gndVerts.length / floatsPerVertex);	// draw this many vertices.
-
-    // THIRD VIEWPORT: Fixed orthographic view of side
-    //------------------------------------------
-    //---------Draw Ground Plane, without spinning
-    // Set the matrix to be used for to set the camera view
-  viewMatrix.setLookAt(-g_EyeX, g_EyeY, g_EyeZ, 0, 0, 0, 0, 1, 0);
-
-    // Pass the view projection matrix to our shaders:
-  gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
-
-    // DON'T clear <canvas> or you'll WIPE OUT what you drew in 1st viewport
-    // gl.clear(gl.COLOR_BUFFER_BIT);
-
-  gl.viewport(gl.drawingBufferWidth / 2, 				// Viewport lower-left corner
-                          gl.drawingBufferHeight / 2, 		// location(in pixels)
-                      gl.drawingBufferWidth / 2, 				// viewport width, height.
-                      gl.drawingBufferHeight / 2);
-
-    // Draw just the ground-plane's vertices
-  gl.drawArrays(gl.LINES, 								// use this drawing primitive, and
-  						  gndStart / floatsPerVertex,	// start at this vertex number, and
-  						  gndVerts.length / floatsPerVertex);	// draw this many vertices.
 	
 }
 
